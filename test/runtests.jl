@@ -540,3 +540,20 @@ end
 @test remotecall_fetch(() -> true, 1)
 @test fetch(remotecall_wait(() -> true, 1))
 Base.remote_do(() -> true, 1) # Doesn't return anything so cannot be `@test`ed but should print some output if it fails
+
+let X = randn(10,2), Y = randn(10,2), x = randn(10), y = randn(10)
+    for b in (true, false)
+        if VERSION < v"0.5.0-dev+679"
+            @test cov(x, b) == cov(x, corrected=b)
+        end
+        for d in (1, 2)
+            @test size(cov(X, d), 1) == 8*d - 6
+            @test size(cov(X, d, b), 1) == 8*d - 6
+            @test size(cov(X, Y, d), 1) == 8*d - 6
+            @test size(cov(X, Y, d, b), 1) == 8*d - 6
+
+            @test size(cor(X, d), 1) == 8*d - 6
+            @test size(cor(X, Y, d), 1) == 8*d - 6
+        end
+    end
+end
