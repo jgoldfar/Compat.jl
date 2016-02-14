@@ -290,6 +290,11 @@ function rewrite_pairs_to_tuples!(expr::Expr)
     return expr
 end
 
+function rewrite_type_call(expr::Expr)
+  shift!(expr.args[1].args) # Remove call/Base.call
+  expr
+end
+
 if VERSION < v"0.4.0-dev+707"
     macro inline(ex)
         esc(ex)
@@ -443,6 +448,19 @@ function _compat(ex::Expr)
     elseif ex.head == :quote && isa(ex.args[1], Symbol)
         # Passthrough
         return ex
+    elseif (ex.head == :(=)) || (ex.head == :function)
+      f = ex.args[1]
+      if isa(f, Expr) && (f.head == :call) &&
+      (
+      ((isa(f.args[1], Expr)) &&
+      (f.args[1].head == :.) &&
+      (f.args[1].args[1] ==:Base) &&
+      (f.args[1].args[2].value==:call)) ||
+      (isa(f.args[1], Symbol) &&
+      f.args[1]==:call)
+      )
+        return rewrite_type_call(ex)
+      end
     end
     return Expr(ex.head, map(_compat, ex.args)...)
 end

@@ -813,3 +813,43 @@ for T in (BigFloat, Float64)
 end
 
 end
+
+
+ex1 = :(Base.call(n::Num) = println("Old: ", n.val))
+ex1mod = Compat.rewrite_type_call(copy(ex1))
+shift!(ex1mod.args[2].args) # Remove LineNumberNode
+@test ex1mod == :((n::Num)() = println("Old: ", n.val))
+ex2 = :(Base.call(n::Num, x::Real) = println("Old: ", n.val, x))
+ex2mod = Compat.rewrite_type_call(copy(ex2))
+shift!(ex2mod.args[2].args) # Remove LineNumberNode
+@test ex2mod == :((n::Num)(x::Real) = println("Old: ", n.val, x))
+ex3 = :(Base.call(n::Num, x::Real, y, z) = println("Old: ", n.val, x, z))
+ex3mod = Compat.rewrite_type_call(copy(ex3))
+shift!(ex3mod.args[2].args) # Remove LineNumberNode
+@test ex3mod == :((n::Num)(x::Real, y, z) = println("Old: ", n.val, x, z))
+ex4 = :(call(b::Num) = println("Old v1", b.val))
+ex4mod = Compat.rewrite_type_call(copy(ex4))
+shift!(ex4mod.args[2].args) # Remove LineNumberNode
+@test ex4mod == :((b::Num)() = println("Old v1", b.val))
+ex5 = :(call(f::Num, x) = println("Old v1prime", f.val, ", ", x))
+ex5mod = Compat.rewrite_type_call(copy(ex5))
+shift!(ex5mod.args[2].args) # Remove LineNumberNode
+@test ex5mod == :((f::Num)(x) = println("Old v1prime", f.val, ", ", x))
+
+ex6 = :(function Base.call(d::Num)
+    println("Old: d.val")
+  end)
+ex6mod = Compat.rewrite_type_call(copy(ex6))
+shift!(ex6mod.args[2].args) # Remove LineNumberNode
+@test ex6mod == :(function (d::Num)()
+    println("Old: d.val")
+  end)
+
+ex7 = :(function call(d::Num, x, y)
+    println("Old: d.val")
+  end)
+ex7mod = Compat.rewrite_type_call(copy(ex7))
+shift!(ex7mod.args[2].args) # Remove LineNumberNode
+@test ex7mod == :(function (d::Num)(x, y)
+    println("Old: d.val")
+  end)
